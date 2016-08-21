@@ -1,0 +1,50 @@
+#include <pthread.h>
+#include <stdio.h>
+
+int flag;
+pthread_mutex_t thread_flag_mutex;
+
+void initialize_flag () {
+  pthread_mutex_init (&thread_flag_mutex, NULL);
+  flag = 0;
+}
+
+void* thread_function (void* thread_arg) {
+  int i;
+  for( i = 0; i < 5;i++) {
+    sleep(1);
+    int flag_is_set;
+
+    pthread_mutex_lock (&thread_flag_mutex);
+    flag_is_set = flag;
+    pthread_mutex_unlock (&thread_flag_mutex);
+
+  if (flag_is_set)
+      printf("Funciona!\n");
+  }
+  return NULL;
+}
+
+
+
+void set_thread_flag (int flag_value) {
+  pthread_mutex_lock (&thread_flag_mutex);
+  flag = flag_value;
+  pthread_mutex_unlock (&thread_flag_mutex);
+}
+
+int main()
+ {
+   pthread_t thread_id1;
+   pthread_t thread_id2;
+
+   pthread_create (&thread_id1, NULL, &thread_function, NULL);
+
+   sleep(4);
+   set_thread_flag(!flag);
+
+   pthread_join(thread_id1, NULL);
+   pthread_join(thread_id2, NULL);
+
+  return 0;
+ }
