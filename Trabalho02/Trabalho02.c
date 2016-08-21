@@ -36,10 +36,9 @@ executar: ./Trabalho02.c 12
   };
   /*mutex*/
   pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-  /*Semaforo*/
+  /* Semaforo  */
   sem_t semaforo;
-
-int main()
+ int main()
  {
    //guarda o menor multiplo comum
    int mmc = 0;
@@ -59,44 +58,28 @@ int main()
      int i;
      for(i = 1; i < nth_value; i++){
        if(!(i%data->value)){
+
          /*Aqui queremos evitar que outras threads acessem o mmc durante esta execução*/
          pthread_mutex_lock (&mutex);
-          printf("Validou\n");
          if(mmc == 0){
             mmc = i;
-            printf("esperando por ser o primeiro\n");
-            pthread_mutex_unlock (&mutex);
-            sem_wait(&semaforo);
          }else{
-           printf("mmc já possui dados\n");
            /*testa se o valor que está no mmc é um mútiplo seu*/
-           if(mmc == i){
-                printf("Finalizar\n");
-                pthread_mutex_unlock (&mutex);
-             return NULL;
-            }else if(mmc < i){
-                       printf("esperando\n");
-                       mmc = i;
-                       pthread_mutex_unlock (&mutex);
-                       sem_wait(&semaforo);
-                    }else{
-                        printf("continue\n");
-
-                    }
-            printf("saiu dos ifs \n");
+           if(!(mmc%data->value)){
+                //if(sem_trywait(&semaforo) == EAGAIN){
+             sem_wait(&semaforo);
+                 // printf("Erro %d\n",sem_trywait(&semaforo));
+                //};
+           }
          }
-         printf(" mmc : %d \n",mmc);
          pthread_mutex_unlock (&mutex);
          /*libera a variavel mmc*/
-         int id = pthread_self();
-         printf(" Thread id %d \n",id);
-         printf(" m : %d \n",i);
 
-         //printf(" passou do semaforo ");
+          printf(" %d,",i);
        }
      }
       printf("\n");
-      /*printf("Thread %d \n Multiple: %d \n",a,data->value);*/
+      //printf("Thread %d \n Multiple: %d \n",a,data->value);
    }
 
    struct params parametro1;
@@ -108,18 +91,20 @@ int main()
    struct params parametro3;
    parametro3.value = 7;
 
-   /*Iniciando o Semaforo*/
-   sem_init(&semaforo,0,0);
-
    pthread_t thread_id1;
    pthread_t thread_id2;
 
-   pthread_create (&thread_id2, NULL, &mmc_function, &parametro1);
+   /*inicializando o semaforo*/
+   sem_init(&semaforo,0,0);
+
+   pthread_create (&thread_id2, NULL, &mmc_function, &parametro2);
    pthread_create (&thread_id1, NULL, &mmc_function, &parametro2);
+
 
    pthread_join (thread_id1, NULL);
    pthread_join (thread_id2, NULL);
 
    printf("MMC: %d \n",mmc);
+   sem_destroy(&semaforo);
   return 0;
  }
